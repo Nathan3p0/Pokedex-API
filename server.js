@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
+const POKEDEX = require('./pokedex.json');
 
 console.log(process.env.API_TOKEN);
 
@@ -29,7 +30,24 @@ const handleGetTypes = (req, res) => {
 app.get('/types', handleGetTypes);
 
 const handleGetPokemon = (req, res) => {
-    res.send('Hello Pokemon!');
+    const { name, type } = req.query;
+
+    let results = POKEDEX.pokemon;
+
+    if (name) {
+        results = POKEDEX.pokemon.filter(pokemon => pokemon.name.toLowerCase().includes(name.toLowerCase()));
+    }
+
+    if (type) {
+        const validTypeToLowerCase = validTypes.map(type => type.toLowerCase())
+        if (!validTypeToLowerCase.includes(type.toLowerCase())) {
+            return res.status(400).json({ 'Please enter Valid Types': validTypes });
+
+        }
+        results = POKEDEX.pokemon.filter(pokemon => pokemon.type.map(poke => poke.toLowerCase()).includes(type.toLowerCase()));
+    }
+
+    res.json(results);
 }
 
 app.get('/pokemon', handleGetPokemon);
