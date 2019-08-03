@@ -5,14 +5,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 const POKEDEX = require('./pokedex.json');
 
-console.log(process.env.API_TOKEN);
-
 const app = express();
 
 app.use(helmet());
 app.use(cors());
 app.use(function validateBearerToken(req, res, next) {
-    console.log('validate bearer token middleware')
     const authToken = req.get('Authorization');
     const apiToken = process.env.API_TOKEN;
 
@@ -23,7 +20,18 @@ app.use(function validateBearerToken(req, res, next) {
     next()
 })
 
-app.use(morgan('dev'));
+const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'common';
+app.use(morgan(morganSetting));
+
+app.use((error, req, res, next) => {
+    let response;
+    if (process.env.NODE_ENV === 'production') {
+        response = { error: { message: 'server error' } }
+    } else {
+        response = { error }
+    }
+    res.status(500).json(response);
+})
 
 const validTypes = [`Bug`, `Dark`, `Dragon`, `Electric`, `Fairy`, `Fighting`, `Fire`, `Flying`, `Ghost`, `Grass`, `Ground`, `Ice`, `Normal`, `Poison`, `Psychic`, `Rock`, `Steel`, `Water`];
 
@@ -56,8 +64,6 @@ const handleGetPokemon = (req, res) => {
 
 app.get('/pokemon', handleGetPokemon);
 
-const port = 8000;
+const PORT = process.env.PORT || 8000;
 
-app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`)
-});
+app.listen(PORT);
